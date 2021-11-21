@@ -1,0 +1,15 @@
+<players root="gfx/characters/costumes/" 
+         portraitroot="gfx/ui/stage/" 
+         nameimageroot="gfx/ui/boss/">
+	<player name="NES" skin="Character_001_Isaac.png" hp="2" canShoot="False"
+          nameimage="PlayerName_01_Isaac.png"
+          portrait="PlayerPortrait_Isaac.png"
+		      birthright="???"
+          skinColor="0"/>
+	<player name="Gameboy" skin="Character_001_Isaac.png" hp="2" canShoot="False"
+          nameimage="PlayerName_01_Isaac.png" 
+          portrait="PlayerPortrait_Isaac.png" 
+		      birthright="???"
+          skinColor="0"
+		      bSkinParent="NES"/>
+</players>

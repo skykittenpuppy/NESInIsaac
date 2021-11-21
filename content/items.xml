@@ -1,0 +1,3 @@
+<items gfxroot="gfx/items/" version="1">
+  <active quality="0" maxcharges="0" gfx="Collectibles_ROM.png" name="Choose ROM" description="Use to select the ROM to run within the emulator" />
+</items>
