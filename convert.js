@@ -1,11 +1,27 @@
 // converts a regular NES rom to lua format
 
+const infile = __dirname + '/' + (process.argv[2] || 'roms/Super Mario Bros (E).nes');
+const outfile = __dirname + '/NES ROM.lua';
+
 const fs = require('fs');
-const rom = fs.readFileSync(process.argv[0] || 'roms/Super Mario Bros (E).nes');
-const ints = [];
+if (fs.existsSync(outfile)) fs.unlinkSync(outfile);
+const out = fs.createWriteStream(outfile);
 
-for (const byte of rom) {
-  ints.push(byte);
-}
+out.on('open', () => {
+  const rom = fs.createReadStream(infile, {
+    highWaterMark: 1024
+  });
 
-fs.writeFileSync('NES ROM.lua', 'return {' + ints.join(',') + '}');
+  out.write('return {');
+
+  rom.on('data', chunk => {
+    for (const byte of chunk) {
+      out.write(`${byte}, `);
+    }
+  });
+
+  rom.on('close', () => {
+    out.write('}');
+    out.close();
+  });
+});
