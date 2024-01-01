@@ -1,0 +1,3 @@
+Run either convert.CS or convert.JS as a C# or JS program, and provide it with the path to your rom, they should then convert your ROM to "NES ROM.lua"
+
+This is necessary because we're not (or weren't) able to just read arbitrary files sadge

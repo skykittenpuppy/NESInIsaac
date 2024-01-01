@@ -1,10 +1,6 @@
 NESEmulator = RegisterMod('NES Emulator', 1)
 include = include or require
-
---[[local temp = {}
-for i, var in pairs(_G) do
-    temp[#temp+1] = i
-end]]
+local game = Game();
 
 local PLAYER_NES = Isaac.GetPlayerTypeByName("NES")
 local PLAYER_GB = Isaac.GetPlayerTypeByName("Gameboy", true)
@@ -114,8 +110,12 @@ NESEmulator.bit.rshift = function(x, a) if rshifts[x] and rshifts[x][a] then ret
 
 --Isaac = {}
 --Isaac.DebugString = print
-
-local _rom_encoded = include('NES ROM') or include('NES ROM Default')
+local backupROMLoaded = fals
+local _rom_encoded = include('NES ROM')
+if type(_rom_encoded) == "string" then
+    backupROMLoaded = true
+    _rom_encoded = include('NES ROM Default')
+end
 
 -- process rom
 local _rom = ''
@@ -130,8 +130,8 @@ local pixel = Sprite()
 pixel:Load('gfx/a_single_fucking_pixel.anm2')
 pixel:Play('Idle')
 
-local width = 256
-local height = 240
+local NESScreenSize = Vector(256, 240)
+local ScreenSize = Vector(Isaac.GetScreenWidth(), Isaac.GetScreenHeight())
 local pixSize = 1
 local lastSource
 local sound = false
@@ -201,6 +201,7 @@ local function drawPalette()
     for i = 1, #palette do
         local px = palette[i]
         if px then
+            print("Col"..i..": "..px[1]..", "..px[2]..", "..px[3])
             local r = px[1]
             local g = px[2]
             local b = px[3]
@@ -214,71 +215,64 @@ end
 local function drawScreen()
     local pxs = NESEmulator.Nes.cpu.ppu.output_pixels
 
-    local filterStart = Isaac.GetTime()
-
-    -- get every color's frequency
-    local max = 0
-    local colorsfreq = {}
-    local colors = {}
-    for i = 1, pixelCount, 6 do --Hacky fix for speed lol -Hannah
-        local px = pxs[i]
-        local s = px[1] + px[2] + px[3] -- this is a HACK and will BREAK but its okay shhh shh its okay
-        colorsfreq[s] = (colorsfreq[s] or 0) + 1
-        colors[s] = px
-        max = math.max(colorsfreq[s], max)
-    end
-
-    -- find the most frequent
-    local mostfrequent
-    for i, c in pairs(colorsfreq) do
-        if c == max then mostfrequent = colors[i] break end
-    end
-
-    -- render the most frequent color as the bg
-    if mostfrequent then
-        pixel.Color = Color(mostfrequent[1], mostfrequent[2], mostfrequent[3], 1)
-        pixel.Scale = Vector(width, height)
-        pixel:Render(Vector(Isaac.GetScreenWidth()/2 - width/2, Isaac.GetScreenHeight()/2 - height/2))
-    end
-
-    pixel.Scale = Vector.One * 1--2.85
-
-    local filterDur = Isaac.GetTime() - filterStart
-
     local renderStart = Isaac.GetTime()
-    for i = 1, pixelCount, 1 do
-        local px = pxs[i]
-        --if px[1] == 0 then goto continue end
-        if px[1] == mostfrequent[1] and px[2] == mostfrequent[2] and px[3] == mostfrequent[3] then goto continue end
-        local x = (i - 1) % width
-        local y = math.floor((i - 1) / width) % height
-        pixel.Color = Color(px[1], px[2], px[3], 1)
-        pixel:Render(Vector(Isaac.GetScreenWidth()/2 + x - width/2, Isaac.GetScreenHeight()/2 + y - height/2))
-        ::continue::
-    end
 
-    Isaac.RenderText(filterDur .. 'ms filter', 0, 0, 1, 1, 1, 1)
-    Isaac.RenderText((Isaac.GetTime() - renderStart) .. 'ms render', 0, 12, 1, 1, 1, 1)
-    Isaac.RenderText(ticktime .. 'ms update', 0, 24, 1, 1, 1, 1)
+    local BGColour = NESEmulator.Nes.cpu.ppu.output_color[1] or {0,0,0}
+	if REPENTOGON and false then
+		local colour = KColor(BGColour[1], BGColour[2], BGColour[3], 1)
+		Isaac.DrawQuad(
+			ScreenSize/2 - NESScreenSize/2,
+			ScreenSize/2 + Vector(1,-1)*NESScreenSize/2,
+			ScreenSize/2 - Vector(1,-1)*NESScreenSize/2,
+			ScreenSize/2 + NESScreenSize/2,
+			colour, 0
+		)
+		for i = 1, pixelCount, 1 do
+			local px = pxs[i]
+			if px[1] ~= BGColour[1] or px[2] ~= BGColour[2] or px[3] ~= BGColour[3] then
+				colour = KColor(px[1], px[2], px[3], 1)
+				local pos = ScreenSize - NESScreenSize + Vector(
+					(i - 1) % NESScreenSize.X,
+					math.floor((i - 1) / NESScreenSize.X) % NESScreenSize.Y
+				)
+				Isaac.DrawQuad(pos, pos, pos, pos, colour, 0)
+			end
+		end
+	else
+		pixel.Scale = NESScreenSize
+		pixel.Color = Color(BGColour[1], BGColour[2], BGColour[3], 1)
+		pixel:Render(ScreenSize/2 - NESScreenSize/2)
+
+		pixel.Scale = Vector.One
+		for i = 1, pixelCount, 1 do
+			local px = pxs[i]
+			if px[1] ~= BGColour[1] or px[2] ~= BGColour[2] or px[3] ~= BGColour[3] then
+				pixel.Color = Color(px[1], px[2], px[3], 1)
+				pixel:Render(ScreenSize - NESScreenSize + Vector(
+					(i - 1) % NESScreenSize.X,
+					math.floor((i - 1) / NESScreenSize.X) % NESScreenSize.Y
+				))
+			end
+		end
+	end
+
+    local font = Font()
+    font:Load("font/terminus.fnt")
+    local h = font:GetLineHeight()
+    font:DrawString((Isaac.GetTime() - renderStart) .. 'ms render', 10, h*1, KColor(1, 1, 1, 1))
+    font:DrawString(ticktime .. 'ms update', 10, h*2, KColor(1, 1, 1, 1))
+    if backupROMLoaded then
+        font:DrawString("NO ROM LOADED, REVERTED TO DEFAULT", ScreenSize.X/2-1, h*2, KColor(1, 0, 0, 1), 2, true)
+    end
+    font:DrawString("D-Pad = Shoot", ScreenSize.X-11, ScreenSize.Y/2+(h*-2), KColor(1, 1, 1, 1), 1)
+    font:DrawString("A = Confirm",   ScreenSize.X-11, ScreenSize.Y/2+(h*-1), KColor(1, 1, 1, 1), 1)
+    font:DrawString("B = Back",      ScreenSize.X-11, ScreenSize.Y/2+(h* 0), KColor(1, 1, 1, 1), 1)
+    font:DrawString("Select = Map",  ScreenSize.X-11, ScreenSize.Y/2+(h* 1), KColor(1, 1, 1, 1), 1)
+    font:DrawString("Start = Drop",  ScreenSize.X-11, ScreenSize.Y/2+(h* 2), KColor(1, 1, 1, 1), 1)
 end
 
 
---[[local string = "NES Global Check: "
-for i, var in pairs(_G) do
-    local thing = true
-    for i2, var2 in pairs(temp) do
-        if i == var2 then
-            thing = false
-        end
-    end
-    if thing then
-        string = string..i..", "
-    end
-end
-print(string)]]
-
-
-NESPlayer = false
+local NESPlayer
 NESEmulator:AddCallback(ModCallbacks.MC_POST_RENDER, function()
     if Game():IsPaused() then return end
 
@@ -316,30 +310,15 @@ NESEmulator:AddCallback(ModCallbacks.MC_POST_RENDER, function()
         Game():GetHUD():SetVisible(false)
         
         -- update the game
-        update()
+        --update()
+
+		ScreenSize = Vector(ScreenSize.X, ScreenSize.Y)
 
         -- draw shit
         drawPalette()
-        --drawScreen()
+        drawScreen()
         
-    end
-end)
-NESEmulator:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, function(shaderName)
-    if Game():IsPaused() then return end
-    
-    if NESPlayer and shaderName == "NES Shader" then
-        local palette = NESEmulator.Nes.cpu.ppu.output_color
-        local pxs = NESEmulator.Nes.cpu.ppu.output_pixels
-        local params = {Palette = palette,--{},
-                        Pixels = {},
-                        test = {1.0,0.5,1.0}
-        }
-        for i=1, #palette do
-            params.Palette = {palette[i][1], palette[i][2], palette[i][3],}
-        end
-        for i=1, #pxs do
-            params.Pixels[i] = i<#palette and i or 0
-        end
-        return params
+        -- update the game (it thinks this comes after rendering actually)
+        update()
     end
 end)

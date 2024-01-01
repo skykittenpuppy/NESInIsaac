@@ -1,8 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <metadata>
-	<name>! ! nes emulator in isaac</name>
-	<directory>! ! nes emulator in isaac</directory>
-	<description/>
-	<version>1.0</version>
-	<visibility/>
-</metadata>
+    <name>! ! nes emulator in isaac</name>
+    <directory>! ! nes emulator in isaac</directory>
+    <id>2672401904</id>
+    <description>HAVE YOU EVER WANTED TO PLAY MARIO 1 AT 5FPS WITHIN THE BINDING OF ISAAC? NO?
 
+...WELL NOW YOU CAN!
+
+Created almost entirely by Oatmealine, and with me acting as.. &quot;moral support&quot;
+This mod is a port of LuaNES (https://github.com/nico-abram/LuaNES) to The Binding of Isaac's mod API
+
+- Update: thanks to linedime#7655 for pointing out that the mod just... completely forgot to do local game = Game() and that it broke everything! If anything else is broken then idk, and I don't really care either :D hopefully it works.</description>
+    <version>1.3</version>
+    <visibility>Private</visibility>
+    <tag id="Lua"/>
+    <tag id="Player Characters"/>
+    <tag id="Tweaks"/>
+</metadata>
