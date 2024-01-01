@@ -231,7 +231,7 @@ local function drawScreen()
 			local px = pxs[i]
 			if px[1] ~= BGColour[1] or px[2] ~= BGColour[2] or px[3] ~= BGColour[3] then
 				colour = KColor(px[1], px[2], px[3], 1)
-				local pos = ScreenSize - NESScreenSize + Vector(
+				local pos = ScreenSize/2 - NESScreenSize/2 + Vector(
 					(i - 1) % NESScreenSize.X,
 					math.floor((i - 1) / NESScreenSize.X) % NESScreenSize.Y
 				)
@@ -248,7 +248,7 @@ local function drawScreen()
 			local px = pxs[i]
 			if px[1] ~= BGColour[1] or px[2] ~= BGColour[2] or px[3] ~= BGColour[3] then
 				pixel.Color = Color(px[1], px[2], px[3], 1)
-				pixel:Render(ScreenSize - NESScreenSize + Vector(
+				pixel:Render(ScreenSize/2 - NESScreenSize/2 + Vector(
 					(i - 1) % NESScreenSize.X,
 					math.floor((i - 1) / NESScreenSize.X) % NESScreenSize.Y
 				))
