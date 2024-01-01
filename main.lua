@@ -218,7 +218,7 @@ local function drawScreen()
     local renderStart = Isaac.GetTime()
 
     local BGColour = NESEmulator.Nes.cpu.ppu.output_color[1] or {0,0,0}
-	if REPENTOGON and false then
+	if REPENTOGON then
 		local colour = KColor(BGColour[1], BGColour[2], BGColour[3], 1)
 		Isaac.DrawQuad(
 			ScreenSize/2 - NESScreenSize/2,
