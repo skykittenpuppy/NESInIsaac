@@ -205,9 +205,19 @@ local function drawPalette()
             local r = px[1]
             local g = px[2]
             local b = px[3]
-            pixel.Color = Color(r, g, b, 1)
-            pixel.Scale = Vector(w, h)
-            pixel:Render(Vector(x + ((i - 1) % row) * w, y + math.floor((i - 1) / 4) * h))
+			if REPENTOGON then
+				local colour = KColor(r, g, b, 1)
+				local pos = Vector(x + ((i - 1) % row) * w, y + math.floor((i - 1) / 4) * h)
+				Isaac.DrawLine(
+					pos + Vector(w/2, 0),
+					pos + Vector(w/2, h),
+					colour, colour, w
+				)
+			else
+				pixel.Color = Color(r, g, b, 1)
+				pixel.Scale = Vector(w, h)
+				pixel:Render(Vector(x + ((i - 1) % row) * w, y + math.floor((i - 1) / 4) * h))
+			end
         end
     end
 end
@@ -220,14 +230,12 @@ local function drawScreen()
     local BGColour = NESEmulator.Nes.cpu.ppu.output_color[1] or {0,0,0}
 	if REPENTOGON then
 		local colour = KColor(BGColour[1], BGColour[2], BGColour[3], 1)
-		Isaac.DrawQuad(
-			ScreenSize/2 - NESScreenSize/2,
-			ScreenSize/2 + Vector(1,-1)*NESScreenSize/2,
-			ScreenSize/2 - Vector(1,-1)*NESScreenSize/2,
-			ScreenSize/2 + NESScreenSize/2,
-			colour, 0
+		Isaac.DrawLine( --Yes for some reason its easier to draw squares by using lines, idfk
+			ScreenSize/2 - Vector(0, NESScreenSize.Y/2),
+			ScreenSize/2 + Vector(0, NESScreenSize.Y/2),
+			colour, colour, NESScreenSize.X
 		)
-		for i = 1, pixelCount, 1 do
+		for i = 1, pixelCount do
 			local px = pxs[i]
 			if px[1] ~= BGColour[1] or px[2] ~= BGColour[2] or px[3] ~= BGColour[3] then
 				colour = KColor(px[1], px[2], px[3], 1)
@@ -235,7 +243,7 @@ local function drawScreen()
 					(i - 1) % NESScreenSize.X,
 					math.floor((i - 1) / NESScreenSize.X) % NESScreenSize.Y
 				)
-				Isaac.DrawQuad(pos, pos, pos, pos, colour, 0)
+				Isaac.DrawLine(pos+Vector(0.5,0), pos+Vector(0.5,1), colour, colour, 1)
 			end
 		end
 	else
@@ -244,7 +252,7 @@ local function drawScreen()
 		pixel:Render(ScreenSize/2 - NESScreenSize/2)
 
 		pixel.Scale = Vector.One
-		for i = 1, pixelCount, 1 do
+		for i = 1, pixelCount do
 			local px = pxs[i]
 			if px[1] ~= BGColour[1] or px[2] ~= BGColour[2] or px[3] ~= BGColour[3] then
 				pixel.Color = Color(px[1], px[2], px[3], 1)
@@ -310,15 +318,12 @@ NESEmulator:AddCallback(ModCallbacks.MC_POST_RENDER, function()
         Game():GetHUD():SetVisible(false)
         
         -- update the game
-        --update()
+        update()
 
 		ScreenSize = Vector(ScreenSize.X, ScreenSize.Y)
 
         -- draw shit
         drawPalette()
         drawScreen()
-        
-        -- update the game (it thinks this comes after rendering actually)
-        update()
     end
 end)
